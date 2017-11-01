@@ -1,6 +1,5 @@
 package crypto
 
-//generate ras key file with x509 standard
 import (
 	"bytes"
 	"crypto/rand"
@@ -9,6 +8,8 @@ import (
 	"encoding/pem"
 )
 
+//generate ras key file with x509 standard
+//return private key, public key, error
 func GenerateRsaKey(bits int) (string, string, error) {
 	//private key
 	privatek, err := rsa.GenerateKey(rand.Reader, bits)

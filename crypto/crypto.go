@@ -2,6 +2,8 @@ package crypto
 
 import (
 	"bytes"
+	"math/rand"
+	"time"
 )
 
 type CryptoError string
@@ -22,6 +24,21 @@ const (
 )
 
 var NIL_BYTES = []byte("")
+
+// generate simple rand password
+func GenRandPassword(l int, symbol ...bool) []byte {
+	str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	if len(symbol) > 0 && symbol[0] {
+		str += "!@#$%^&*()_+"
+	}
+	bytes := []byte(str)
+	result := make([]byte, 0, l)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for i := 0; i < l; i++ {
+		result = append(result, bytes[r.Intn(len(bytes))])
+	}
+	return result
+}
 
 /*
 	padding way

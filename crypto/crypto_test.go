@@ -12,6 +12,7 @@ func Test_des(t *testing.T) {
 	test_aescbc_zero(t)
 	test_aesecb_zero(t)
 	test_rsa(t)
+	test_genrandpwd(t)
 }
 
 func test_descbc_zero(t *testing.T) {
@@ -95,5 +96,16 @@ func test_rsa(t *testing.T) {
 	}
 	if !bytes.Equal(dori, ori) {
 		t.Errorf("rsa %s not equal %s", ori, dori)
+	}
+}
+
+func test_genrandpwd(t *testing.T) {
+	t.Log(string(GenRandPassword(10)))
+	t.Log(string(GenRandPassword(10, true)))
+}
+
+func Benchmark_genrandpwd(b *testing.B) {
+	for i := 0; i < 1000000; i++ {
+		GenRandPassword(10)
 	}
 }
