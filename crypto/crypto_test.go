@@ -104,8 +104,8 @@ func test_genrandpwd(t *testing.T) {
 	t.Log(string(GenRandPassword(10, true)))
 }
 
-func Benchmark_genrandpwd(b *testing.B) {
-	for i := 0; i < 1000000; i++ {
+func Benchmark_crypto(b *testing.B) {
+	for i := 0; i < b.N; i++ {
 		GenRandPassword(10)
 	}
 }
