@@ -18,14 +18,16 @@ func Run(cmd string, args ...string) (string, error) {
 func runCmd(cmd string, args ...string) (string, error) {
 	c := exec.Command(cmd, args...) //(cmd, args...)
 	var out bytes.Buffer
+	var errOut bytes.Buffer
 	c.Stdout = &out
+	c.Stderr = &errOut
 	err := c.Start()
 	if err != nil {
-		return "", err
+		return errOut.String(), err
 	}
 	err = c.Wait()
 	if err != nil {
-		return "", err
+		return errOut.String(), err
 	}
 	return out.String(), err
 }
