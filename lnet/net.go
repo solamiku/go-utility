@@ -1,6 +1,7 @@
 package lent
 
 import (
+	"crypto/tls"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -31,7 +32,10 @@ func (ba *BasicAuth) String() string {
 }
 
 func HttpGet(sUrl, body string, cookies Cookies, basicAuth ...BasicAuth) (string, int, error) {
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
 	req, err := http.NewRequest("GET", sUrl, strings.NewReader(body))
 	if err != nil {
 		return "", 0, err
@@ -79,4 +83,39 @@ func HttpPost(sUrl string, params Param) (body []byte, statusCode int, err error
 	body, err = ioutil.ReadAll(resp.Body)
 	statusCode = resp.StatusCode
 	return
+}
+
+func HttpBasicPost(sUrl string, cookies Cookies, params Param, basicAuth BasicAuth) (string, int, error) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	form := url.Values{}
+	for k, v := range params {
+		form.Set(k, v)
+	}
+	req, err := http.NewRequest("POST", sUrl, strings.NewReader(form.Encode()))
+	if err != nil {
+		return "", 0, err
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	//set cookie
+	sCookie := ""
+	for key, val := range cookies {
+		if len(sCookie) > 0 {
+			sCookie += "&"
+		}
+		sCookie += (key + "=" + val)
+	}
+	req.Header.Set("Cookie", sCookie)
+
+	req.Header.Set("Authorization", "Basic "+basicAuth.String())
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", 0, err
+	}
+	defer resp.Body.Close()
+	rbody, err := ioutil.ReadAll(resp.Body)
+	return string(rbody), resp.StatusCode, nil
 }
