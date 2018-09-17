@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"regexp"
 	"runtime"
 	"runtime/pprof"
@@ -157,4 +158,29 @@ func SimpleCallInfo(lv int) string {
 	}
 	s := fmt.Sprintf("%s(%s)", file, funcName)
 	return s
+}
+
+//  check dir existed or not
+//
+func IsPahtExisted(path string) bool {
+	_, err := os.Stat(path)
+	if err != nil && os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+func MakeDir(path string, mode ...os.FileMode) error {
+	defaultMode := os.ModePerm
+	if len(mode) > 0 {
+		defaultMode = 0
+		for _, m := range mode {
+			defaultMode = defaultMode | m
+		}
+	}
+	err := os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return os.Chmod(path, defaultMode)
 }

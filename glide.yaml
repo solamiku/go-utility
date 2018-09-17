@@ -1,0 +1,13 @@
+package: github.com/go-utility
+homepage: https://github.com/solamiku/go-utility
+license: MIT
+owners:
+- name: lipm
+- {}
+- {}
+ignore:
+- github.com/go-utility
+import:
+- package: github.com/axgle/mahonia
+- package: github.com/bitly/go-simplejson
+  version: ~0.5.0
