@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"runtime/pprof"
@@ -160,8 +161,13 @@ func SimpleCallInfo(lv int) string {
 	return s
 }
 
-//  check dir existed or not
-//
+//create path include current directory
+//@param start without "/"
+func PathIncludeCurrentDir(path string) string {
+	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	return dir + "/" + path
+}
+
 func IsPahtExisted(path string) bool {
 	_, err := os.Stat(path)
 	if err != nil && os.IsNotExist(err) {
