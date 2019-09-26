@@ -11,14 +11,24 @@ import (
 func Run(cmd string, args ...string) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return runCmd("cmd", append([]string{"/C", cmd}, args...)...)
+		return runCmd("cmd", "", append([]string{"/C", cmd}, args...)...)
 	default:
-		return runCmd(cmd, args...)
+		return runCmd(cmd, "", args...)
 	}
 }
 
-func runCmd(cmd string, args ...string) (string, error) {
+func RunWithDir(cmd, dir string, args ...string) (string, error) {
+	switch runtime.GOOS {
+	case "windows":
+		return runCmd("cmd", dir, append([]string{"/C", cmd}, args...)...)
+	default:
+		return runCmd(cmd, dir, args...)
+	}
+}
+
+func runCmd(cmd, dir string, args ...string) (string, error) {
 	c := exec.Command(cmd, args...) //(cmd, args...)
+	c.Dir = dir
 	var out bytes.Buffer
 	var errOut bytes.Buffer
 	c.Stdout = &out
