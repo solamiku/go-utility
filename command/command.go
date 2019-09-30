@@ -8,44 +8,62 @@ import (
 	"github.com/axgle/mahonia"
 )
 
-func Run(cmd string, args ...string) (string, error) {
+var Default *Command = &Command{}
+
+func NewCommand() *Command {
+	return &Command{}
+}
+
+type Command struct {
+	dirname string
+	decode  []string
+}
+
+func (pcmd *Command) Run(cmd string, args ...string) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return runCmd("cmd", "", append([]string{"/C", cmd}, args...)...)
+		return pcmd.runCmd("cmd", append([]string{"/C", cmd}, args...)...)
 	default:
-		return runCmd(cmd, "", args...)
+		return pcmd.runCmd(cmd, args...)
 	}
 }
 
-func RunWithDir(cmd, dir string, args ...string) (string, error) {
-	switch runtime.GOOS {
-	case "windows":
-		return runCmd("cmd", dir, append([]string{"/C", cmd}, args...)...)
-	default:
-		return runCmd(cmd, dir, args...)
-	}
+func (pcmd *Command) SetDir(dir string) {
+	pcmd.dirname = dir
 }
 
-func runCmd(cmd, dir string, args ...string) (string, error) {
+func (pcmd *Command) SetDecode(src, dst string) {
+	if len(src) == 0 {
+		pcmd.decode = pcmd.decode[:0]
+	}
+	pcmd.decode = []string{src, dst}
+}
+
+//
+func (pcmd *Command) runCmd(cmd string, args ...string) (string, error) {
 	c := exec.Command(cmd, args...) //(cmd, args...)
-	c.Dir = dir
+	c.Dir = pcmd.dirname
 	var out bytes.Buffer
 	var errOut bytes.Buffer
 	c.Stdout = &out
 	c.Stderr = &errOut
 	err := c.Start()
 	if err != nil {
-		return encodeCommand(errOut.String()), err
+		return errOut.String(), err
 	}
 	err = c.Wait()
 	if err != nil {
-		return encodeCommand(errOut.String()), err
+		return errOut.String(), err
 	}
-	return encodeCommand(out.String()), err
+	ret := out.String()
+	if len(pcmd.decode) > 0 {
+		ret = encodeCommand(ret, pcmd.decode[0], pcmd.decode[1])
+	}
+	return ret, err
 }
 
-func encodeCommand(src string) string {
-	return ConvertToByte(src, "gbk", "utf8")
+func encodeCommand(src, s, t string) string {
+	return ConvertToByte(src, s, t)
 }
 
 func ConvertToByte(src string, srcCode string, targetCode string) string {

@@ -85,6 +85,26 @@ func HttpPost(sUrl string, params Param) (body []byte, statusCode int, err error
 	return
 }
 
+func HttpPostJsonString(sUrl string, jsonstr string) (body []byte, statusCode int, err error) {
+	hc := http.Client{}
+
+	req, err := http.NewRequest("POST", sUrl, strings.NewReader(jsonstr))
+	if err != nil {
+		return
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	// req.Header.Add("X-V", 1)
+	resp, err := hc.Do(req)
+	if err != nil {
+		return
+	}
+
+	defer resp.Body.Close()
+	body, err = ioutil.ReadAll(resp.Body)
+	statusCode = resp.StatusCode
+	return
+}
+
 func HttpBasicPost(sUrl string, cookies Cookies, params Param, basicAuth BasicAuth) (string, int, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
