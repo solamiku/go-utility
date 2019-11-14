@@ -40,7 +40,12 @@ func (pcmd *Command) SetDecode(src, dst string) {
 }
 
 //
-func (pcmd *Command) runCmd(cmd string, args ...string) (string, error) {
+func (pcmd *Command) runCmd(cmd string, args ...string) (rmsg string, rerr error) {
+	defer func() {
+		if len(pcmd.decode) > 0 {
+			rmsg = encodeCommand(rmsg, pcmd.decode[0], pcmd.decode[1])
+		}
+	}()
 	c := exec.Command(cmd, args...) //(cmd, args...)
 	c.Dir = pcmd.dirname
 	var out bytes.Buffer
@@ -56,9 +61,6 @@ func (pcmd *Command) runCmd(cmd string, args ...string) (string, error) {
 		return errOut.String(), err
 	}
 	ret := out.String()
-	if len(pcmd.decode) > 0 {
-		ret = encodeCommand(ret, pcmd.decode[0], pcmd.decode[1])
-	}
 	return ret, err
 }
 
