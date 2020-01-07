@@ -190,3 +190,31 @@ func MakeDir(path string, mode ...os.FileMode) error {
 	}
 	return os.Chmod(path, defaultMode)
 }
+
+func ReadFileWithContentType(file string, types []string) (string, error) {
+	var dat []byte
+	var content string
+	dat, err := ioutil.ReadFile(file)
+	if err != nil {
+		content = err.Error()
+	} else {
+		content = string(dat)
+	}
+	if len(dat) > 512 {
+		dat = dat[:512]
+	}
+	contentType := http.DetectContentType(dat)
+	if len(types) > 0 {
+		has := false
+		for _, st := range types {
+			if strings.Contains(contentType, st) {
+				has = true
+			}
+		}
+		if !has {
+			content = fmt.Sprintf("file type is:%v, cannot show the content.", contentType)
+			return content, Errof("type %s not matched.", contentType)
+		}
+	}
+	return content, nil
+}
