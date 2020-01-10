@@ -11,11 +11,14 @@ import (
 var Default *Command = &Command{}
 
 func NewCommand() *Command {
-	return &Command{}
+	return &Command{
+		envs: make(map[string]string, 2),
+	}
 }
 
 type Command struct {
 	dirname string
+	envs    map[string]string
 	decode  []string
 }
 
@@ -30,6 +33,10 @@ func (pcmd *Command) Run(cmd string, args ...string) (string, error) {
 
 func (pcmd *Command) SetDir(dir string) {
 	pcmd.dirname = dir
+}
+
+func (pcmd *Command) SetEnv(key, value string) {
+	pcmd.envs[key] = value
 }
 
 func (pcmd *Command) SetDecode(src, dst string) {
@@ -48,6 +55,13 @@ func (pcmd *Command) runCmd(cmd string, args ...string) (rmsg string, rerr error
 	}()
 	c := exec.Command(cmd, args...) //(cmd, args...)
 	c.Dir = pcmd.dirname
+	if len(pcmd.envs) > 0 {
+		envarr := make([]string, 0, len(pcmd.envs))
+		for k, val := range pcmd.envs {
+			envarr = append(envarr, k+"="+val)
+		}
+		c.Env = envarr
+	}
 	var out bytes.Buffer
 	var errOut bytes.Buffer
 	c.Stdout = &out
@@ -75,3 +89,4 @@ func ConvertToByte(src string, srcCode string, targetCode string) string {
 	_, cdata, _ := tagCoder.Translate([]byte(srcResult), true)
 	return string(cdata)
 }
+
