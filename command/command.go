@@ -19,6 +19,7 @@ func NewCommand() *Command {
 type Command struct {
 	dirname string
 	envs    map[string]string
+	args    []string
 	decode  []string
 }
 
@@ -29,6 +30,10 @@ func (pcmd *Command) Run(cmd string, args ...string) (string, error) {
 	default:
 		return pcmd.runCmd(cmd, args...)
 	}
+}
+
+func (pcmd *Command) SetArgs(ps []string) {
+	pcmd.args = ps
 }
 
 func (pcmd *Command) SetDir(dir string) {
@@ -53,6 +58,9 @@ func (pcmd *Command) runCmd(cmd string, args ...string) (rmsg string, rerr error
 			rmsg = encodeCommand(rmsg, pcmd.decode[0], pcmd.decode[1])
 		}
 	}()
+	if len(pcmd.args) > 0 {
+		args = append(args, pcmd.args...)
+	}
 	c := exec.Command(cmd, args...) //(cmd, args...)
 	c.Dir = pcmd.dirname
 	if len(pcmd.envs) > 0 {
@@ -89,4 +97,3 @@ func ConvertToByte(src string, srcCode string, targetCode string) string {
 	_, cdata, _ := tagCoder.Translate([]byte(srcResult), true)
 	return string(cdata)
 }
-
