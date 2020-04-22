@@ -1,7 +1,6 @@
 package command
 
 import (
-	"bytes"
 	"os/exec"
 	"runtime"
 
@@ -70,20 +69,24 @@ func (pcmd *Command) runCmd(cmd string, args ...string) (rmsg string, rerr error
 		}
 		c.Env = envarr
 	}
-	var out bytes.Buffer
-	var errOut bytes.Buffer
-	c.Stdout = &out
-	c.Stderr = &errOut
-	err := c.Start()
+	ret, err := c.CombinedOutput()
 	if err != nil {
-		return errOut.String(), err
+		return "", err
 	}
-	err = c.Wait()
-	if err != nil {
-		return errOut.String(), err
-	}
-	ret := out.String()
-	return ret, err
+	// var out bytes.Buffer
+	// var errOut bytes.Buffer
+	// c.Stdout = &out
+	// c.Stderr = &errOut
+	// err := c.Start()
+	// if err != nil {
+	// 	return errOut.String(), err
+	// }
+	// err = c.Wait()
+	// if err != nil {
+	// 	return errOut.String(), err
+	// }
+	// ret := out.String()
+	return string(ret), err
 }
 
 func encodeCommand(src, s, t string) string {
