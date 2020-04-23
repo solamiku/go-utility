@@ -221,3 +221,46 @@ func ReadFileWithContentType(file string, types []string) (string, error) {
 	}
 	return content, nil
 }
+
+// 带完整调用参数信息的panic栈信息
+func WritePanicStackFull(prefix string, wr io.Writer) {
+	s := []byte("/src/runtime/panic.go")
+	e := []byte("\ngoroutine ")
+	line := []byte("\n")
+
+	byteSize := 1 << 11 //2KB
+	stack := make([]byte, byteSize)
+	stackWriteLen := runtime.Stack(stack, true)
+	if stackWriteLen >= byteSize {
+		stackWriteLen = byteSize - 1
+	}
+	// fmt.Printf("ori:\n%s\n", string(stack))
+	// 去除开头和换行
+	start := bytes.Index(stack, s)
+	if start != -1 {
+		stack = stack[start:stackWriteLen]
+	}
+	start = bytes.Index(stack, line) + 1
+	if start != -1 {
+		stack = stack[start:]
+	}
+	// 去除换行和结尾
+	end := bytes.LastIndex(stack, line)
+	if end != -1 {
+		stack = stack[:end]
+	}
+	end = bytes.Index(stack, e)
+	if end != -1 {
+		stack = stack[:end]
+	}
+	// 组装
+	stackString := string(stack)
+	ss := strings.Split(stackString, "\n")
+	filereg, _ := regexp.Compile(`[^/|^\\]+\.go`)
+	funcreg, _ := regexp.Compile(`[^/|^\\]+\)`)
+	for i := 0; i+1 < len(ss); i += 2 {
+		filestr := filereg.FindString(ss[i+1])
+		funcstr := funcreg.FindString(ss[i])
+		fmt.Fprintf(wr, "%v(%v) %v(%v)\n", prefix, i/2+1, filestr, funcstr)
+	}
+}

@@ -3,6 +3,7 @@ package runtime
 import (
 	"bytes"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -20,4 +21,8 @@ func Test_runtime(t *testing.T) {
 	t.Log(IsPahtExisted("log/test1"))
 	t.Log(MakeDir("log/test", os.ModePerm))
 	t.Log(IsPahtExisted("log/test"))
+
+	buf := strings.Builder{}
+	WritePanicStackFull("panic", &buf)
+	t.Log(buf.String())
 }

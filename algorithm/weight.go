@@ -4,18 +4,24 @@ import (
 	"container/heap"
 	"math"
 	"math/rand"
+	"reflect"
 )
 
+type sampleItem struct {
+	val    interface{}
+	weight float64
+}
+
 type rsHeapItem struct {
-	rand_w float64
-	idx    int
+	randWeight float64
+	idx        int
 }
 
 type rsHeap []*rsHeapItem
 
 func (rsh rsHeap) Len() int { return len(rsh) }
 
-func (rsh rsHeap) Less(i, j int) bool { return rsh[i].rand_w < rsh[j].rand_w }
+func (rsh rsHeap) Less(i, j int) bool { return rsh[i].randWeight < rsh[j].randWeight }
 
 func (rsh rsHeap) Swap(i, j int) { rsh[i], rsh[j] = rsh[j], rsh[i] }
 
@@ -31,80 +37,81 @@ func (rsh *rsHeap) Pop() interface{} {
 	return rshi
 }
 
-type ReservoirSamplingInterface interface {
+type reservoirSamplingInterface interface {
 	Len() int
 	GetWeight(idx int) float64
 }
 
-func ReservoirSampleWeight(sample ReservoirSamplingInterface, res_len int, r *rand.Rand) []int {
-	result := make([]int, res_len)
-	sample_len := sample.Len()
-
-	h := &rsHeap{}
-	for i := 0; i < sample_len; i++ {
+func reservoirSampleWeight(sample reservoirSamplingInterface,
+	resultsLen int, randGen *rand.Rand) []int {
+	minHeap := &rsHeap{}
+	for idx, sampleLen := 0, sample.Len(); idx < sampleLen; idx++ {
 		rshi := &rsHeapItem{
-			idx:    i,
-			rand_w: math.Pow(r.Float64(), (1.0 / sample.GetWeight(i))),
+			idx:        idx,
+			randWeight: math.Pow(randGen.Float64(), (1.0 / sample.GetWeight(idx))),
 		}
-		if h.Len() < res_len {
-			heap.Push(h, rshi)
-		} else {
-			if (*h)[0].rand_w < rshi.rand_w {
-				heap.Pop(h)
-				heap.Push(h, rshi)
-			}
+		if minHeap.Len() < resultsLen {
+			heap.Push(minHeap, rshi)
+			continue
+		}
+		if (*minHeap)[0].randWeight < rshi.randWeight {
+			heap.Pop(minHeap)
+			heap.Push(minHeap, rshi)
 		}
 	}
 
-	res_idx := 0
-	for h.Len() > 0 {
-		rshi := heap.Pop(h).(*rsHeapItem)
-		result[res_idx] = rshi.idx
-		res_idx++
+	indice := make([]int, minHeap.Len())
+	idx := 0
+	for minHeap.Len() > 0 {
+		rshi := heap.Pop(minHeap).(*rsHeapItem)
+		indice[idx] = rshi.idx
+		idx++
 	}
-	return result
-
+	return indice
 }
 
-//id-weight basic
-type BasicWeightObj struct {
-	Id     int
-	Weight float64
-}
-type basicReservoirSampling struct {
-	objs []BasicWeightObj
+func NewReservoir() *Reservoir {
+	return &Reservoir{items: make([]*sampleItem, 0)}
 }
 
-func (brs basicReservoirSampling) Len() int {
-	return len(brs.objs)
+type Reservoir struct {
+	items      []*sampleItem
+	resultType reflect.Type
 }
 
-func (brs basicReservoirSampling) GetWeight(idx int) float64 {
-	if idx < 0 || idx > len(brs.objs) {
-		return 0
+func (reservoir *Reservoir) Fill(val interface{}, weight float64) error {
+	reservoir.items = append(reservoir.items,
+		&sampleItem{val: val, weight: weight})
+	if reservoir.resultType == nil {
+		reservoir.resultType = reflect.SliceOf(reflect.TypeOf(val))
 	}
-	return brs.objs[idx].Weight
+	return nil
 }
 
-func (brs basicReservoirSampling) GetWeightResultId(r *rand.Rand) int {
-	rs := ReservoirSampleWeight(brs, 1, r)
-	if len(rs) > 0 {
-		return brs.objs[rs[0]].Id
+func (reservoir *Reservoir) Len() int                     { return len(reservoir.items) }
+func (reservoir *Reservoir) GetWeight(idx int) float64    { return reservoir.items[idx].weight }
+func (reservoir *Reservoir) GetValue(idx int) interface{} { return reservoir.items[idx].val }
+
+func (reservoir *Reservoir) Sample(resultsLen int, randGen *rand.Rand) interface{} {
+	if reservoir.Len() == 0 {
+		return nil
 	}
-	return -1
+	if resultsLen > reservoir.Len() {
+		resultsLen = reservoir.Len()
+	}
+	resultIndice := reservoirSampleWeight(reservoir, resultsLen, randGen)
+	resultSlice := reflect.MakeSlice(reservoir.resultType, resultsLen, resultsLen)
+	for i, idx := range resultIndice {
+		resultSlice.Index(i).Set(reflect.ValueOf(reservoir.GetValue(idx)))
+	}
+	return resultSlice.Interface()
 }
 
-func (brs basicReservoirSampling) GetWeightResultIds(r *rand.Rand, num int) []int {
-	rs := ReservoirSampleWeight(brs, num, r)
-	ids := make([]int, 0, num)
-	for _, v := range rs {
-		ids = append(ids, brs.objs[v].Id)
+func (reservoir *Reservoir) SampleOne(randGen *rand.Rand) interface{} {
+	if reservoir.Len() == 0 {
+		return nil
 	}
-	return ids
-}
-
-func NewBasicReservoirSampling(objs []BasicWeightObj) basicReservoirSampling {
-	return basicReservoirSampling{
-		objs: objs,
-	}
+	resultIndice := reservoirSampleWeight(reservoir, 1, randGen)
+	idx := resultIndice[0]
+	return reservoir.GetValue(idx)
 }

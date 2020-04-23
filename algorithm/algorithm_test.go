@@ -9,18 +9,28 @@ import (
 func Test_algorithm(t *testing.T) {
 	t.Log(DivisionIntByWeights(101, []int{2, 1, 1}))
 	t.Log(DivisionIntByWeights(102, []int{1, 10, 2}))
+
+	ba, r := newReservoir()
+	t.Log(ba.SampleOne(r))
 }
 
-func HIDE_Benchmark_algorithm(b *testing.B) {
+func newReservoir() (*Reservoir, *rand.Rand) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	ba := NewBasicReservoirSampling([]BasicWeightObj{
-		BasicWeightObj{Id: 1, Weight: 1.0},
-		BasicWeightObj{Id: 10, Weight: 1.0},
-		BasicWeightObj{Id: 20, Weight: 1.0},
-		BasicWeightObj{Id: 30, Weight: 1.0},
-	})
+	ba := NewReservoir()
+	ba.Fill(1, 1.0)
+	ba.Fill(2, 2.0)
+	ba.Fill(3, 3.0)
+	ba.Fill(4, 4.0)
+	ba.Fill(5, 5.0)
+	ba.Fill(6, 6.0)
+	ba.Fill(7, 7.0)
+	return ba, r
+}
+
+func Benchmark_algorithm(b *testing.B) {
+	ba, r := newReservoir()
 	for i := 0; i < b.N; i++ {
-		ba.GetWeightResultId(r)
+		ba.SampleOne(r)
 	}
 }
 
