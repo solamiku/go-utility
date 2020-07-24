@@ -72,18 +72,26 @@ func gZipUncompress(src []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func Base64encode(src []byte) []byte {
+func Base64encode(src []byte, custom_b64enc ...*base64.Encoding) []byte {
+	b64enc := base64.StdEncoding
+	if len(custom_b64enc) > 0 {
+		b64enc = custom_b64enc[0]
+	}
 	var b bytes.Buffer
-	w := base64.NewEncoder(base64.URLEncoding, &b)
+	w := base64.NewEncoder(b64enc, &b)
 	w.Write(src)
 	w.Close()
 	return b.Bytes()
 }
 
-func Base64decode(src []byte) []byte {
+func Base64decode(src []byte, custom_b64enc ...*base64.Encoding) []byte {
+	b64enc := base64.StdEncoding
+	if len(custom_b64enc) > 0 {
+		b64enc = custom_b64enc[0]
+	}
 	b := bytes.NewReader(src)
 	var buf bytes.Buffer
-	r := base64.NewDecoder(base64.URLEncoding, b)
+	r := base64.NewDecoder(b64enc, b)
 	io.Copy(&buf, r)
 	return buf.Bytes()
 }
