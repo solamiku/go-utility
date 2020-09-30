@@ -1,4 +1,4 @@
-package lent
+package lnet
 
 import (
 	"crypto/tls"
@@ -11,7 +11,7 @@ import (
 )
 
 type Cookies map[string]string
-type Param map[string]string
+type Param map[string]interface{}
 
 /*
 	basic http authentication
