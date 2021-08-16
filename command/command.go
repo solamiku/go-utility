@@ -71,7 +71,7 @@ func (pcmd *Command) runCmd(cmd string, args ...string) (rmsg string, rerr error
 	}
 	ret, err := c.CombinedOutput()
 	if err != nil {
-		return "", err
+		return string(ret), err
 	}
 	// var out bytes.Buffer
 	// var errOut bytes.Buffer
