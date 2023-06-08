@@ -1,4 +1,4 @@
-package lent
+package lnet
 
 import (
 	"net/http"
