@@ -6,12 +6,13 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/solamiku/go-utility/compress"
 )
 
 type Cookies map[string]string
-type Param map[string]interface{}
+type Param map[string]string
 
 /*
 	basic http authentication
@@ -31,11 +32,18 @@ func (ba *BasicAuth) String() string {
 	return r
 }
 
-func HttpGet(sUrl, body string, cookies Cookies, basicAuth ...BasicAuth) (string, int, error) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+func basicClient() *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			}},
+		Timeout: 10 * time.Second,
 	}
-	client := &http.Client{Transport: tr}
+}
+
+func HttpGet(sUrl, body string, cookies Cookies, basicAuth ...BasicAuth) (string, int, error) {
+	client := basicClient()
 	req, err := http.NewRequest("GET", sUrl, strings.NewReader(body))
 	if err != nil {
 		return "", 0, err
@@ -63,8 +71,7 @@ func HttpGet(sUrl, body string, cookies Cookies, basicAuth ...BasicAuth) (string
 }
 
 func HttpPost(sUrl string, params Param) (body []byte, statusCode int, err error) {
-	hc := http.Client{}
-
+	hc := basicClient()
 	form := url.Values{}
 	for k, v := range params {
 		form.Set(k, v)
@@ -86,7 +93,7 @@ func HttpPost(sUrl string, params Param) (body []byte, statusCode int, err error
 }
 
 func HttpPostJsonString(sUrl string, jsonstr string) (body []byte, statusCode int, err error) {
-	hc := http.Client{}
+	hc := basicClient()
 
 	req, err := http.NewRequest("POST", sUrl, strings.NewReader(jsonstr))
 	if err != nil {
@@ -106,10 +113,7 @@ func HttpPostJsonString(sUrl string, jsonstr string) (body []byte, statusCode in
 }
 
 func HttpBasicPost(sUrl string, cookies Cookies, params Param, basicAuth BasicAuth) (string, int, error) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
+	client := basicClient()
 	form := url.Values{}
 	for k, v := range params {
 		form.Set(k, v)
