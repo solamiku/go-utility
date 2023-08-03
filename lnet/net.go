@@ -32,14 +32,20 @@ func (ba *BasicAuth) String() string {
 	return r
 }
 
+var _default *http.Client
+
 func basicClient() *http.Client {
-	return &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			}},
-		Timeout: 10 * time.Second,
+	if _default == nil {
+		_default = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				}},
+			Timeout: 10 * time.Second,
+		}
 	}
+	return _default
+
 }
 
 func HttpGet(sUrl, body string, cookies Cookies, basicAuth ...BasicAuth) (string, int, error) {
