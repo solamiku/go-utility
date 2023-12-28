@@ -33,15 +33,24 @@ func (ba *BasicAuth) String() string {
 }
 
 var _default *http.Client
+var _timeout time.Duration
+
+func WithBasicTimeout(seconds int64) {
+	_timeout = time.Duration(seconds) * time.Second
+}
 
 func basicClient() *http.Client {
-	if _default == nil {
+	t := 10 * time.Second
+	if _timeout > 0 {
+		t = _timeout
+	}
+	if _default == nil || _default.Timeout < t {
 		_default = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
 					InsecureSkipVerify: true,
 				}},
-			Timeout: 10 * time.Second,
+			Timeout: t,
 		}
 	}
 	return _default
