@@ -52,6 +52,11 @@ type SimpleBarManager struct {
 }
 
 func (sm *SimpleBarManager) Run() {
+	for idx, bar := range sm.bars {
+		if bar.CheckFinish(time.Now()) {
+			delete(sm.bars, idx)
+		}
+	}
 	go func() {
 		defer func() {
 			sm.finishNotify <- 1
