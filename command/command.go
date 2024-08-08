@@ -20,6 +20,11 @@ type Command struct {
 	envs    map[string]string
 	args    []string
 	decode  []string
+	cur     *exec.Cmd
+}
+
+func (pcmd *Command) CurExec() *exec.Cmd {
+	return pcmd.cur
 }
 
 func (pcmd *Command) Run(cmd string, args ...string) (string, error) {
@@ -50,7 +55,6 @@ func (pcmd *Command) SetDecode(src, dst string) {
 	pcmd.decode = []string{src, dst}
 }
 
-//
 func (pcmd *Command) runCmd(cmd string, args ...string) (rmsg string, rerr error) {
 	defer func() {
 		if len(pcmd.decode) > 0 {
@@ -61,6 +65,7 @@ func (pcmd *Command) runCmd(cmd string, args ...string) (rmsg string, rerr error
 		args = append(args, pcmd.args...)
 	}
 	c := exec.Command(cmd, args...) //(cmd, args...)
+	pcmd.cur = c
 	c.Dir = pcmd.dirname
 	if len(pcmd.envs) > 0 {
 		envarr := make([]string, 0, len(pcmd.envs))
