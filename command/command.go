@@ -3,6 +3,7 @@ package command
 import (
 	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/axgle/mahonia"
 )
@@ -16,21 +17,31 @@ func NewCommand() *Command {
 }
 
 type Command struct {
-	dirname string
-	envs    map[string]string
-	args    []string
-	decode  []string
-	cur     *exec.Cmd
+	dirname         string
+	envs            map[string]string
+	args            []string
+	decode          []string
+	winShellCommand string
+	cur             *exec.Cmd
 }
 
 func (pcmd *Command) CurExec() *exec.Cmd {
 	return pcmd.cur
 }
 
+func (pcmd *Command) WithWindowsShell(command string) *Command {
+	pcmd.winShellCommand = command
+	return pcmd
+}
+
 func (pcmd *Command) Run(cmd string, args ...string) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return pcmd.runCmd("cmd", append([]string{"/C", cmd}, args...)...)
+		if strings.Contains(cmd, ".sh") && len(pcmd.winShellCommand) > 0 {
+			return pcmd.runCmd(pcmd.winShellCommand, append([]string{cmd}, args...)...)
+		} else {
+			return pcmd.runCmd("cmd", append([]string{"/C", cmd}, args...)...)
+		}
 	default:
 		return pcmd.runCmd(cmd, args...)
 	}
